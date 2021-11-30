@@ -11,6 +11,6 @@
   "dependencies": {
     "chalk": "^2.4.2",
     "sanitize-filename": "^1.6.1",
-    "ytdl-core": "^0.29.1"
+    "ytdl-core": "^4.9.1"
   }
 }
