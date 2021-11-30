@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "chalk": "^2.4.2",
+    "multi-progress": "^4.0.0",
+    "progress": "2.0.3",
     "sanitize-filename": "^1.6.1",
     "ytdl-core": "^4.9.1"
   }
