@@ -3,6 +3,7 @@ const ytdl = require('ytdl-core');
 const chalk = require('chalk');
 const sanitize = require("sanitize-filename");
 var MultiProgress = require('multi-progress');
+const async = require('async');
 
 videos = require('./vids')
 
@@ -66,11 +67,29 @@ function downloadVideo(url, resolve = () => {}) {
     })
 }
 
-downloadProgress.tick(0);
-videos.list.forEach(async (url) => {
-    await new Promise(
-        (resolve, _reject) => {
-            downloadVideo(url, resolve)
-        }
-    )
-});
+async function main(){
+    downloadProgress.tick(0);
+    const paralel_downloads_number = 5;
+
+    const queue = async.queue(async (url, callback = (_err, _r) => {}) => {
+        await new Promise(
+            (resolve, _reject) => {
+                downloadVideo(url, resolve)
+            }
+        )
+        callback();
+    }, paralel_downloads_number);
+
+    queue.error(function (error, url){
+        console.log(`An error occurred while processing task ${url}`);
+        console.error(error);
+    });
+
+    videos.list.forEach((url) => queue.push(url));
+
+    queue.drain(() => {
+        console.log('Successfully processed all videos');
+    })
+}
+
+main();
