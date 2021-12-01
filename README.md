@@ -23,6 +23,7 @@ Create `videos.json` with input files following the structure:
 ```
 
 ## Run 🚀
+
 ```
-node app.js
+npm start
 ```

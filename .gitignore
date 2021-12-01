@@ -2,3 +2,4 @@ node_modules
 videos/**/*
 !videos/.gitkeep
 videos.json
+.env

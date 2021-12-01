@@ -8,6 +8,7 @@ const async = require('async');
 videos = require('./videos.json')
 
 const videosDir = "./videos/"
+const MAX_CONCURRENT_TASKS = Number(process.env.MAX_CONCURRENT_TASKS ?? 5);
 
 var multiBar = new MultiProgress()
 
@@ -69,7 +70,6 @@ function downloadVideo(url, resolve = () => {}) {
 
 async function main(){
     downloadProgress.tick(0);
-    const paralel_downloads_number = 5;
 
     const queue = async.queue(async (url, callback = (_err, _r) => {}) => {
         await new Promise(
@@ -78,7 +78,7 @@ async function main(){
             }
         )
         callback();
-    }, paralel_downloads_number);
+    }, MAX_CONCURRENT_TASKS);
 
     queue.error(function (error, url){
         console.log(`An error occurred while processing task ${url}`);
