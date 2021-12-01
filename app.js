@@ -4,17 +4,18 @@ const chalk = require('chalk');
 const sanitize = require("sanitize-filename");
 var MultiProgress = require('multi-progress');
 const async = require('async');
+const flatten = require('./utils')
 
-videos = require('./videos.json')
+videos = flatten(require('./videos.json'))
 
-const videosDir = "./videos/"
+const baseDir = "./videos/"
 const MAX_CONCURRENT_TASKS = Number(process.env.MAX_CONCURRENT_TASKS ?? 5);
 
 var multiBar = new MultiProgress()
 
 console.log(chalk.white.bgRed.bold('Multi video downloader'))
 
-if(videos.list.length === 0) {
+if(Object.keys(videos).length === 0) {
     chalk.Red.bold('Video list empty')
     process.exit()
 }
@@ -24,11 +25,21 @@ let downloadProgress = multiBar.newBar(
         complete: '=',
         incomplete: ' ',
         width: 20,
-        total: videos.list.length,
+        total: Object.keys(videos)
+                .reduce((acc, curr) => [...acc, ...videos[curr]],[])
+                .length,
     }
 )
- 
-function downloadVideo(url, resolve = () => {}) {
+
+function createDirs(){
+    Object.keys(videos).forEach(
+        (path) => {
+            fs.mkdirSync(baseDir+path, { recursive: true })
+        }
+    )
+}
+
+function downloadVideo(path, url, resolve = () => {}) {
     // DOCS: https://www.npmjs.com/package/ytdl-core#ytdlchooseformatformats-options
     const name_max_length = 20;
     let currentVid = ytdl(url, {
@@ -43,7 +54,7 @@ function downloadVideo(url, resolve = () => {}) {
                         .replace(/\s\s+/g, " ")
                         .replace(/\s/g, "-")
                         +".mp4";
-        currentVid.pipe(fs.createWriteStream(videosDir+filename))
+        currentVid.pipe(fs.createWriteStream(baseDir+path+"/"+filename))
 
         currentVid.on("progress",function(_chunkLength,chunksDownloaded, totalChunks){
             if(vidProgressBar== undefined) {
@@ -70,11 +81,12 @@ function downloadVideo(url, resolve = () => {}) {
 
 async function main(){
     downloadProgress.tick(0);
+    createDirs();
 
-    const queue = async.queue(async (url, callback = (_err, _r) => {}) => {
+    const queue = async.queue(async ({url,path}, callback) => {
         await new Promise(
             (resolve, _reject) => {
-                downloadVideo(url, resolve)
+                downloadVideo(path, url, resolve)
             }
         )
         callback();
@@ -85,7 +97,13 @@ async function main(){
         console.error(error);
     });
 
-    videos.list.forEach((url) => queue.push(url));
+    Object.keys(videos).forEach(
+        (path) => {
+            videos[path].forEach(
+                (url) => queue.push({path,url})
+            )
+        }
+    )
 
     queue.drain(() => {
         console.log('Successfully processed all videos');
