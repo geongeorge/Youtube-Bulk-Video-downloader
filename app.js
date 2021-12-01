@@ -83,7 +83,7 @@ async function main(){
     downloadProgress.tick(0);
     createDirs();
 
-    const queue = async.queue(async ({url,path}, callback) => {
+    const queue = async.queue(async ({url,path}, callback = (_err, _r) => {}) => {
         await new Promise(
             (resolve, _reject) => {
                 downloadVideo(path, url, resolve)
