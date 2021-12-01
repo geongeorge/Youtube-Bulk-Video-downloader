@@ -5,6 +5,7 @@ const sanitize = require("sanitize-filename");
 var MultiProgress = require('multi-progress');
 const async = require('async');
 const flatten = require('./utils')
+const ytfps = require('ytfps');
 
 videos = flatten(require('./videos.json'))
 
@@ -20,6 +21,12 @@ if(Object.keys(videos).length === 0) {
     process.exit()
 }
 
+function sanitizeText(str){
+    return sanitize(str)
+            .replace(/\s\s+/g, " ")
+            .replace(/\s/g, "-")
+}
+
 let downloadProgress = multiBar.newBar(
     ":total Videos [:bar] :percent",{
         complete: '=',
@@ -30,6 +37,18 @@ let downloadProgress = multiBar.newBar(
                 .length,
     }
 )
+
+function mapPlaylistToVideos(playlists){
+    videos.playlists = playlists.map(
+        (playlistOBJ) => ({
+            [sanitizeText(playlistOBJ.title)] : playlistOBJ
+                                    .videos
+                                    .map((video) => video.id)
+        })
+    ).reduce((acc,curr) => ({...acc, ...curr}), {});
+
+    videos = flatten(videos)
+}
 
 function createDirs(){
     Object.keys(videos).forEach(
@@ -50,10 +69,7 @@ function downloadVideo(path, url, resolve = () => {}) {
     ytdl.getInfo(url).then((vidInfo)=> {
         let vidProgressBar = undefined;
         let chunkLength = 0;
-        let filename = sanitize(vidInfo.videoDetails.title)
-                        .replace(/\s\s+/g, " ")
-                        .replace(/\s/g, "-")
-                        +".mp4";
+        let filename = sanitizeText(vidInfo.videoDetails.title)+".mp4";
         currentVid.pipe(fs.createWriteStream(baseDir+path+"/"+filename))
 
         currentVid.on("progress",function(_chunkLength,chunksDownloaded, totalChunks){
@@ -81,6 +97,15 @@ function downloadVideo(path, url, resolve = () => {}) {
 
 async function main(){
     downloadProgress.tick(0);
+
+    if(videos.playlists && videos.playlists.length > 0){
+        mapPlaylistToVideos(await Promise.all(
+            videos.playlists.map(
+                (playlistURL) => ytfps(playlistURL)
+            )
+        ));
+    }
+
     createDirs();
 
     const queue = async.queue(async ({url,path}, callback = (_err, _r) => {}) => {

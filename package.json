@@ -16,6 +16,7 @@
     "multi-progress": "^4.0.0",
     "progress": "2.0.3",
     "sanitize-filename": "^1.6.1",
-    "ytdl-core": "^4.9.1"
+    "ytdl-core": "^4.9.1",
+    "ytfps": "^1.0.5"
   }
 }
