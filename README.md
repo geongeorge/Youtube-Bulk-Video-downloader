@@ -2,14 +2,24 @@
 
 Download multiple youtube videos easily.
 
-Edit `vids.js` to add your videos.
-
 - Recommended Node version 16.11.0
 
 ## Install ⚙️
 
 ```
 npm install
+```
+
+## Input file
+
+Create `videos.json` with input files following the structure:
+
+```json
+{
+  "list":[
+    "https://youtu.be/dQw4w9WgXcQ"
+  ]
+}
 ```
 
 ## Run 🚀

@@ -5,7 +5,7 @@ const sanitize = require("sanitize-filename");
 var MultiProgress = require('multi-progress');
 const async = require('async');
 
-videos = require('./vids')
+videos = require('./videos.json')
 
 const videosDir = "./videos/"
 
